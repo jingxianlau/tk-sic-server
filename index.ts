@@ -8,11 +8,12 @@ const io = new Server(httpServer, {
     cors: {
         origin: ["http://localhost:5173"],
     },
+    connectionStateRecovery: {},
 });
 
 let adminId: string | undefined;
+let leaderboard: { username: string; score: number }[] = [];
 
-let frameCount = 0;
 let autoWeather = true;
 let weather = "sunny"; // Initial weather state
 const WEATHERS = [
@@ -34,13 +35,10 @@ const WEATHERS = [
     "clear",
 ];
 
+// sync time
 setInterval(() => {
-    frameCount++;
-}, 1000 / 60); // 60 FPS update rate
-
-setInterval(() => {
-    io.to("classroom").emit("time", frameCount);
-}, 100);
+    io.to("classroom").emit("time", Date.now());
+}, 1000);
 
 setInterval(() => {
     if (!autoWeather) return;
@@ -49,19 +47,31 @@ setInterval(() => {
 
 io.on("connection", (socket) => {
     socket.join("classroom");
+    socket.emit("time", Date.now());
     sendWeather(io, weather);
 
-    socket.on("stats", (stats) => {});
+    socket.on("stats", (stats: number) => {
+        const user = leaderboard.find((u) => u.username === socket.id);
+        if (user) {
+            user.score = stats;
+        }
+        leaderboard.sort((a, b) => b.score - a.score);
+        console.log(leaderboard);
+    });
 
     socket.on("disconnect", () => {
         socket.leave("classroom");
+        leaderboard = leaderboard.filter((u) => u.username !== socket.id);
     });
 
     // GOD MODE
     socket.on("auth", (pw) => {
         if (pw === process.env.ADMIN_PASSWORD) {
             adminId = socket.id;
-            console.log(socket.id);
+            socket.emit("auth", "success");
+            console.log("Admin connected: " + socket.id);
+        } else {
+            socket.emit("auth", "nuh uh");
         }
     });
     socket.on("weather", (newWeather) => {
