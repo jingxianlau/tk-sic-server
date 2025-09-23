@@ -65,13 +65,13 @@ io.on("connection", (socket) => {
     });
 
     // GOD MODE
-    socket.on("auth", (pw) => {
+    socket.on("auth", (pw, cb) => {
         if (pw === process.env.ADMIN_PASSWORD) {
             adminId = socket.id;
-            socket.emit("auth", "success");
+            cb("success");
             console.log("Admin connected: " + socket.id);
         } else {
-            socket.emit("auth", "nuh uh");
+            cb("nuh uh");
         }
     });
     socket.on("weather", (newWeather) => {
