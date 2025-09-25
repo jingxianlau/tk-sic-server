@@ -1,0 +1,7 @@
+node_modules
+.env
+docker-compose.yml
+.prettierrc
+bun.lock
+tsconfig.json
+README.md

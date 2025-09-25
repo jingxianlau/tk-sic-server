@@ -1,6 +1,9 @@
 {
   "name": "funni",
   "module": "index.ts",
+  "scripts": {
+      "start": "node index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },

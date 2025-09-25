@@ -6,10 +6,11 @@ import "dotenv/config";
 const httpServer = createServer();
 const io = new Server(httpServer, {
     cors: {
-        origin: ["http://localhost:5173"],
+        origin: [process.env.CLIENT_URL as string],
     },
     connectionStateRecovery: {},
 });
+console.log("CORS allow origin:", process.env.CLIENT_URL)
 
 let adminId: string | undefined;
 let leaderboard: { username: string; score: number }[] = [];
