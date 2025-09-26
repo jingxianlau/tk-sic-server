@@ -85,7 +85,7 @@ io.on("connection", (socket) => {
         if (socket.id !== adminId) return;
         if (!id || !money) return;
 
-        io.to(id).emit('sendMoney', money);
+        io.to(id).emit('receiveMoney', money);
     })
     socket.on("auth", (pw, cb) => {
         if (pw === process.env.ADMIN_PASSWORD) {
