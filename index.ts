@@ -13,7 +13,7 @@ const io = new Server(httpServer, {
 console.log("CORS allow origin:", process.env.CLIENT_URL)
 
 let adminId: string | undefined;
-let leaderboard: { username: string; score: number }[] = [];
+let leaderboard: { id: string; score: number }[] = [];
 
 let autoWeather = true;
 let weather = "sunny"; // Initial weather state
@@ -48,9 +48,6 @@ setInterval(() => {
 
 async function sendStudents() {
     if (!adminId) return;
-    let students = await io.in('classroom').fetchSockets();
-    let s = students.length - 1;
-    io.to(adminId).emit('students', s)
     io.to(adminId).emit('leaderboard', leaderboard)
 }
 
@@ -61,25 +58,39 @@ io.on("connection", (socket) => {
     sendWeather(io, weather);
 
     socket.on("stats", (stats: number) => {
-        const user = leaderboard.find((u) => u.username === socket.id);
+        const user = leaderboard.find((u) => u.id === socket.id);
         if (user) {
             user.score = stats;
         }
         leaderboard.sort((a, b) => b.score - a.score);
+        sendStudents()
     });
+
+    // students request for donation
+    socket.on('cdc', () => {
+        if (!adminId) return;
+        io.to(adminId).emit('cdc', socket.id)
+    })
 
     socket.on("disconnect", () => {
         socket.leave("classroom");
+        leaderboard = leaderboard.filter((u) => u.id !== socket.id);
         sendStudents();
-        leaderboard = leaderboard.filter((u) => u.username !== socket.id);
     });
 
     // GOD MODE
+    socket.on('sendMoney', ({ id, money }) => {
+        if (socket.id !== adminId) return;
+        if (!id || !money) return;
+
+        io.to(id).emit('sendMoney', money);
+    })
     socket.on("auth", (pw, cb) => {
         if (pw === process.env.ADMIN_PASSWORD) {
             adminId = socket.id;
-            cb("success");
+            socket.leave('classroom')
             console.log("Admin connected: " + socket.id);
+            cb("success");
             sendStudents()
         } else {
             cb("nuh uh");
