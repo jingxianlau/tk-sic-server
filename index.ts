@@ -51,6 +51,7 @@ async function sendStudents() {
     let students = await io.in('classroom').fetchSockets();
     let s = students.length - 1;
     io.to(adminId).emit('students', s)
+    io.to(adminId).emit('leaderboard', leaderboard)
 }
 
 io.on("connection", (socket) => {
@@ -65,7 +66,6 @@ io.on("connection", (socket) => {
             user.score = stats;
         }
         leaderboard.sort((a, b) => b.score - a.score);
-        console.log(leaderboard);
     });
 
     socket.on("disconnect", () => {
@@ -98,13 +98,6 @@ io.on("connection", (socket) => {
 
         sendWeather(io, weather);
     });
-    socket.on('naturalDisaster', (dis) => {
-        if (dis === 'flood') {
-            autoWeather = false;
-            weather = 'flood'
-        }
-        sendWeather(io, weather);
-    })
     socket.on("simSpeed", (newSimSpeed) => {
         if (socket.id !== adminId) return;
         if (newSimSpeed < 0 || newSimSpeed > 100) return;
