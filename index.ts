@@ -46,9 +46,18 @@ setInterval(() => {
     maybeChangeWeather(io);
 }, 1000);
 
+async function sendStudents() {
+    let students = await io.in('classroom').fetchSockets();
+    let s = students.length - 1;
+    console.log(s)
+    // io.to(adminId).emit('students', s)
+    if (!adminId) return;
+}
+
 io.on("connection", (socket) => {
     socket.join("classroom");
     socket.emit("time", Date.now());
+    sendStudents()
     sendWeather(io, weather);
 
     socket.on("stats", (stats: number) => {
@@ -62,6 +71,7 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         socket.leave("classroom");
+        sendStudents();
         leaderboard = leaderboard.filter((u) => u.username !== socket.id);
     });
 
@@ -71,6 +81,7 @@ io.on("connection", (socket) => {
             adminId = socket.id;
             cb("success");
             console.log("Admin connected: " + socket.id);
+            sendStudents()
         } else {
             cb("nuh uh");
         }
@@ -88,6 +99,13 @@ io.on("connection", (socket) => {
 
         sendWeather(io, weather);
     });
+    socket.on('naturalDisaster', (dis) => {
+        if (dis === 'flood') {
+            autoWeather = false;
+            weather = 'flood'
+        }
+        sendWeather(io, weather);
+    })
     socket.on("simSpeed", (newSimSpeed) => {
         if (socket.id !== adminId) return;
         if (newSimSpeed < 0 || newSimSpeed > 100) return;
