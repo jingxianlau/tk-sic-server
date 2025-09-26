@@ -47,11 +47,10 @@ setInterval(() => {
 }, 1000);
 
 async function sendStudents() {
+    if (!adminId) return;
     let students = await io.in('classroom').fetchSockets();
     let s = students.length - 1;
-    console.log(s)
-    // io.to(adminId).emit('students', s)
-    if (!adminId) return;
+    io.to(adminId).emit('students', s)
 }
 
 io.on("connection", (socket) => {
