@@ -47,6 +47,7 @@ setInterval(() => {
 }, 1000);
 
 async function sendStudents() {
+    console.log(leaderboard, leaderboard.length)
     if (!adminId) return;
     io.to(adminId).emit('leaderboard', leaderboard)
 }
@@ -54,6 +55,7 @@ async function sendStudents() {
 io.on("connection", (socket) => {
     socket.join("classroom");
     socket.emit("time", Date.now());
+    leaderboard.push({ id: socket.id, score: 500 })
     sendStudents()
     sendWeather(io, weather);
 
@@ -88,6 +90,7 @@ io.on("connection", (socket) => {
     socket.on("auth", (pw, cb) => {
         if (pw === process.env.ADMIN_PASSWORD) {
             adminId = socket.id;
+            leaderboard = leaderboard.filter((u) => u.id !== socket.id);
             socket.leave('classroom')
             console.log("Admin connected: " + socket.id);
             cb("success");
